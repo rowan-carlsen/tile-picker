@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tile Picker</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      #wall {
+        background: black;
+        width: 100%;
+        aspect-ratio: 108/20;
+        display: grid;
+        gap: 2px;
+        grid-template-columns: repeat(27, 1fr);
+        grid-template-rows: repeat(4, 1fr) 0.75fr;
+        border: 2px solid black;
+        margin-bottom: 1rem;
+      }
+      #border {
+        grid-row: 5;
+        grid-column: span 27;
+        background: yellow;
+        width: 100%;
+        height: 100%;
+      }
+      .tile {
+        background: white;
+        background-image: url("marrazzi.jpeg");
+        background-size: 500% 600%;
+        background-position-x: 0;
+        background-position-y: 0;
+        position: relative;
+      }
+      .tile[data-index="none"] {
+        background-image: none;
+      }
+      .tile:is(:hover, :focus-visible)::after,
+      body.show .tile::after {
+        content: attr(data-index);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: larger;
+        background: white;
+        padding: 0.25rem;
+      }
+      button {
+        font-family: sans-serif;
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+        background: blue;
+        cursor: pointer;
+        color: white;
+      }
+      button#reset {
+        background: red;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wall">
+      <div id="border"></div>
+    </div>
+    <button id="reset">Reset</button>
+    <button id="toggle-show">Show/Hide Numbers</button>
+    <script>
+      const wall = document.getElementById("wall");
+      const border = document.getElementById("border");
+      const tileCount = 30;
+      let tiles;
+      runSetup();
+      function runSetup() {
+        const reset = document.getElementById("reset");
+        reset.addEventListener("click", clearAll);
+        const showToggle = document.getElementById("toggle-show");
+        showToggle.addEventListener("click", () =>
+          document.body.classList.toggle("show"),
+        );
+        for (let i = 0; i < 108; i++) {
+          const tile = document.createElement("DIV");
+          tile.className = "tile";
+          tile.dataset.index = "none";
+          wall.appendChild(tile);
+        }
+        tiles = Array.from(document.querySelectorAll(".tile"));
+        wall.appendChild(border);
+        wall.addEventListener("click", swapTiles);
+        loadSavedState();
+      }
+      function loadSavedState() {
+        const savedState = localStorage.getItem("tileArrangement");
+        if (!savedState) {
+          return;
+        }
+        try {
+          const savedArrangement = JSON.parse(savedState);
+          for (let i = 0; i < tiles.length; i++) {
+            tiles[i].dataset.index = savedArrangement[i];
+            updateBackground(tiles[i]);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function swapTiles(e) {
+        const targ = e.target;
+        const newIndex =
+          parseInt(targ.dataset.index === "none" ? 0 : targ.dataset.index) + 1;
+        if (newIndex > tileCount) {
+          targ.dataset.index = "none";
+        } else {
+          targ.dataset.index = newIndex;
+          updateBackground(targ);
+        }
+        updateOutput();
+      }
+
+      function updateBackground(tile) {
+        const index = parseInt(tile.dataset.index);
+        if (isNaN(index)) {
+          return;
+        }
+        tile.style.backgroundPositionX = ((index - 1) % 5) * 25 + "%";
+        tile.style.backgroundPositionY = Math.floor((index - 1) / 5) * 20 + "%";
+      }
+      function updateOutput() {
+        const indices = tiles.map((tile) => tile.dataset.index);
+        localStorage.setItem("tileArrangement", JSON.stringify(indices));
+      }
+      function clearAll() {
+        localStorage.removeItem("tileArrangement");
+        window.location.reload();
+      }
+    </script>
+  </body>
+</html>
