@@ -99,7 +99,11 @@
         }
         tiles = Array.from(document.querySelectorAll(".tile"));
         wall.appendChild(border);
-        wall.addEventListener("click", swapTiles);
+        wall.addEventListener("click", toggleTiles);
+        wall.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          swapTiles(e);
+        });
         loadSavedState();
       }
       function loadSavedState() {
@@ -118,16 +122,20 @@
         }
       }
 
+      function toggleTiles(e) {
+        const targ = e.target;
+        targ.dataset.index = targ.dataset.index === "none" ? 1 : "none";
+        updateBackground(targ);
+        updateOutput();
+      }
+
       function swapTiles(e) {
         const targ = e.target;
-        const newIndex =
-          parseInt(targ.dataset.index === "none" ? 0 : targ.dataset.index) + 1;
-        if (newIndex > tileCount) {
-          targ.dataset.index = "none";
-        } else {
-          targ.dataset.index = newIndex;
-          updateBackground(targ);
+        if (targ.dataset.index === "none") {
+          return;
         }
+        targ.dataset.index = (parseInt(targ.dataset.index) % tileCount) + 1;
+        updateBackground(targ);
         updateOutput();
       }
 
